@@ -1,0 +1,5 @@
+python-socketio
+requests
+google-genai
+python-dotenv
+websocket-client
