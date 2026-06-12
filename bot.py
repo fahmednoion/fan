@@ -162,7 +162,17 @@ def leave_room(room_id):
 def handle_parent_command(sender, text):
 
     global voucher_enabled
+    global auto_reply_enabled
+    if text.lower() == "|ar on":
+    auto_reply_enabled = True
+    send_private(sender, "Auto Reply ON")
+    return
 
+    if text.lower() == "|ar off":
+    auto_reply_enabled = False
+    send_private(sender, "Auto Reply OFF")
+    return
+    
     if text.startswith("|help"):
 
         send_private(
@@ -174,6 +184,8 @@ def handle_parent_command(sender, text):
 |text_room 50 hello
 |voucher on
 |voucher off
+|ar on
+|ar off
 |status
 """
         )
@@ -222,6 +234,7 @@ def handle_parent_command(sender, text):
     if text.lower() == "|voucher on":
 
         voucher_enabled = True
+        auto_reply_enabled = True
         send_private(sender, "Voucher ON")
         return
 
@@ -238,6 +251,7 @@ def handle_parent_command(sender, text):
             f"""
 Rooms: {list(joined_rooms)}
 Voucher: {voucher_enabled}
+AutoReply: {auto_reply_enabled}
 Parents: {list(PARENT_USERS)}
 """
         )
@@ -293,8 +307,10 @@ def private_message(data):
         handle_parent_command(sender, text)
         return
 
-    answer = ask_ai(text)
+    if not auto_reply_enabled:
+    return
 
+    answer = ask_ai(text)
     send_private(sender, answer)
 
 # --------------------------
@@ -355,7 +371,10 @@ def room_message(data):
 
     processed.append(key)
 
-    answer = ask_ai(question)
+    if not auto_reply_enabled:
+    return
+
+     answer = ask_ai(question)
 
     send_room(
         room_id,
