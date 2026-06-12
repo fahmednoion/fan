@@ -397,3 +397,24 @@ def home():
 
 def run_bot():
     main()
+
+import threading
+from flask import Flask
+import os
+
+app = Flask(__name__)
+
+@app.route("/")
+def home():
+    return "Bot is alive!"
+
+def run_bot():
+    main()   # your bot function
+
+if __name__ == "__main__":
+    threading.Thread(target=run_bot).start()
+
+    port = int(os.environ.get("PORT", 10000))
+    print("Starting Flask on port:", port)
+
+    app.run(host="0.0.0.0", port=port)
