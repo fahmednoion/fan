@@ -3,3 +3,4 @@ requests
 google-genai
 python-dotenv
 websocket-client
+flask
