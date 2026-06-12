@@ -383,9 +383,6 @@ def main():
 
     sio.wait()
 
-if __name__ == "__main__":
-    main()
-
 import threading
 import os
 from flask import Flask
