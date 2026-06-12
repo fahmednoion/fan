@@ -162,13 +162,14 @@ def leave_room(room_id):
 def handle_parent_command(sender, text):
 
     global voucher_enabled
-    global auto_reply_enabled
-    if text.lower() == "|ar on":
+global auto_reply_enabled
+
+if text.lower() == "|ar on":
     auto_reply_enabled = True
     send_private(sender, "Auto Reply ON")
     return
 
-    if text.lower() == "|ar off":
+if text.lower() == "|ar off":
     auto_reply_enabled = False
     send_private(sender, "Auto Reply OFF")
     return
