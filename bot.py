@@ -36,7 +36,8 @@ my_user_id = None
 joined_rooms = set()
 processed = deque(maxlen=500)
 voucher_enabled = True
-auto_reply_enabled = True  # Default to True
+auto_reply_enabled = True
+
 
 # --------------------------
 # LOGIN
@@ -69,6 +70,7 @@ def login():
     my_user_id = str(decoded.get("id"))
     print(f"[✓] Logged in as {decoded.get('username')}")
 
+
 # --------------------------
 # AI
 # --------------------------
@@ -84,6 +86,7 @@ def ask_ai(question: str) -> str:
         print(f"[!] AI Error: {e}")
         return "Sorry, I couldn't answer right now."
 
+
 # --------------------------
 # HELPERS
 # --------------------------
@@ -98,6 +101,7 @@ def send_room(room_id: int, text: str) -> None:
         },
     )
 
+
 def send_private(username: str, text: str) -> None:
     """Send a private message to a user."""
     sio.emit(
@@ -107,6 +111,7 @@ def send_private(username: str, text: str) -> None:
             "content": text,
         },
     )
+
 
 def join_room(room_id: int) -> None:
     """Join a room."""
@@ -120,6 +125,7 @@ def join_room(room_id: int) -> None:
     )
     joined_rooms.add(room_id)
 
+
 def leave_room(room_id: int) -> None:
     """Leave a room."""
     room_id = int(room_id)
@@ -131,6 +137,7 @@ def leave_room(room_id: int) -> None:
     )
     joined_rooms.discard(room_id)
 
+
 # --------------------------
 # PARENT COMMANDS
 # --------------------------
@@ -140,58 +147,73 @@ def handle_parent_command(sender: str, text: str) -> None:
 
     text = text.lower()
 
-    if text == "|ar on":
+    # Auto-reply commands
+    if text in ("|ar on", "|ar on"):
         auto_reply_enabled = True
         send_private(sender, "Auto Reply ON")
         return
-    elif text == "|ar off":
+    elif text in ("|ar off", "|ar off"):
         auto_reply_enabled = False
         send_private(sender, "Auto Reply OFF")
         return
-    elif text.startswith("|help"):
+
+    # Help command
+    elif text.startswith(("|help", "|h")):
         help_msg = """
 Available Commands:
-|join_room 50
-|leave_room 50
-|leave_room all
-|text_room 50 hello
-|voucher on
-|voucher off
+|jr 50        (or |join_room 50)
+|lr 50        (or |leave_room 50)
+|lr all       (or |leave_room all)
+|tr 50 hello  (or |text_room 50 hello)
+|voucher on   (or |v on)
+|voucher off  (or |v off)
 |ar on
 |ar off
 |status
 """
         send_private(sender, help_msg)
         return
-    elif (m := re.match(r"\|join_room\s+(\d+)", text)):
-        room = int(m.group(1))
+
+    # Join room: |jr 50 or |join_room 50
+    elif (m := re.match(r"\|(jr|join_room)\s+(\d+)", text)):
+        room = int(m.group(2))
         join_room(room)
         send_private(sender, f"Joined room {room}")
         return
-    elif text == "|leave_room all":
+
+    # Leave room all: |lr all or |leave_room all
+    elif text in ("|lr all", "|leave_room all"):
         for r in list(joined_rooms):
             leave_room(r)
         send_private(sender, "All rooms left")
         return
-    elif (m := re.match(r"\|leave_room\s+(\d+)", text)):
-        room = int(m.group(1))
+
+    # Leave room: |lr 50 or |leave_room 50
+    elif (m := re.match(r"\|(lr|leave_room)\s+(\d+)", text)):
+        room = int(m.group(2))
         leave_room(room)
         send_private(sender, f"Left room {room}")
         return
-    elif (m := re.match(r"\|text_room\s+(\d+)\s+(.+)", text)):
-        room = int(m.group(1))
-        msg = m.group(2)
+
+    # Text room: |tr 50 hello or |text_room 50 hello
+    elif (m := re.match(r"\|(tr|text_room)\s+(\d+)\s+(.+)", text)):
+        room = int(m.group(2))
+        msg = m.group(3)
         send_room(room, msg)
         send_private(sender, f"Message sent to room {room}")
         return
-    elif text == "|voucher on":
+
+    # Voucher commands
+    elif text in ("|voucher on", "|v on"):
         voucher_enabled = True
         send_private(sender, "Voucher ON")
         return
-    elif text == "|voucher off":
+    elif text in ("|voucher off", "|v off"):
         voucher_enabled = False
         send_private(sender, "Voucher OFF")
         return
+
+    # Status command
     elif text == "|status":
         status_msg = f"""
 Rooms: {list(joined_rooms)}
@@ -202,6 +224,7 @@ Parents: {list(PARENT_USERS)}
         send_private(sender, status_msg)
         return
 
+
 # --------------------------
 # SOCKET EVENTS
 # --------------------------
@@ -210,14 +233,17 @@ def connect():
     print("[✓] Connected")
     join_room(ROOM_ID)
 
+
 @sio.event
 def disconnect():
     print("[!] Disconnected")
+
 
 @sio.on("*")
 def catch_all(event, data):
     print(f"\nEVENT: {event}")
     print(json.dumps(data, indent=2)[:500])
+
 
 # --------------------------
 # PRIVATE MESSAGE HANDLER
@@ -238,6 +264,7 @@ def private_message(data):
     if auto_reply_enabled:
         answer = ask_ai(text)
         send_private(sender, answer)
+
 
 # --------------------------
 # ROOM MESSAGE HANDLER
@@ -276,6 +303,7 @@ def room_message(data):
         answer = ask_ai(question)
         send_room(room_id, f"@{sender} {answer}")
 
+
 # --------------------------
 # MAIN
 # --------------------------
@@ -288,15 +316,19 @@ def main():
     )
     sio.wait()
 
+
 # Flask app for Render
 app = Flask(__name__)
+
 
 @app.route("/")
 def home():
     return "Bot is running!"
 
+
 def start_bot():
     main()
+
 
 if __name__ == "__main__":
     # Run bot in background
